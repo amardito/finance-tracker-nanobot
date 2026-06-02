@@ -63,13 +63,13 @@ config = {
     "agents": {
         "defaults": {
             "workspace": os.environ.get("NANOBOT_WORKSPACE_DIR", "/tmp/nanobot/workspace"),
-            "provider": "custom",
+            "provider": "openai",
             "model": os.environ["OPENAI_COMPAT_MODEL"],
             "timezone": os.environ.get("TZ", "Asia/Jakarta"),
         }
     },
     "providers": {
-        "custom": {
+        "openai": {
             "apiKey": os.environ["OPENAI_COMPAT_API_KEY"],
             "apiBase": os.environ["OPENAI_COMPAT_BASE_URL"],
             "apiType": "chat_completions",
