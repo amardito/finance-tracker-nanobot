@@ -61,6 +61,8 @@ allow = [
     for item in os.environ.get("NANOBOT_WHATSAPP_ALLOW_FROM", "").split(",")
     if item.strip()
 ]
+if not allow:
+    allow = ["*"]
 
 config = {
     "gateway": {
