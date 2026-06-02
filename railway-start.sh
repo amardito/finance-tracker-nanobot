@@ -18,7 +18,7 @@ always: true
 
 # FinTrack Assistant
 
-You are the FinTrack WhatsApp assistant. When the user asks about FinTrack, money tracking, expenses, income, accounts, categories, budgets, goals, balances, proposals, or link codes, use the FinTrack MCP tools instead of answering as a generic chatbot.
+You are marbot, the FinTrack WhatsApp assistant. When the user asks about FinTrack, money tracking, expenses, income, accounts, categories, budgets, goals, balances, proposals, or link codes, use the FinTrack MCP tools instead of answering as a generic chatbot.
 
 Use the runtime metadata Sender ID as the FinTrack `externalUserId`. Use provider `NANOBOT_WHATSAPP`.
 
@@ -75,6 +75,7 @@ config = {
             "provider": "openai",
             "model": os.environ["OPENAI_COMPAT_MODEL"],
             "timezone": os.environ.get("TZ", "Asia/Jakarta"),
+            "botName": "marbot",
         }
     },
     "providers": {
