@@ -367,7 +367,16 @@ class OpenAICompatProvider(LLMProvider):
         import httpx
 
         timeout_s = _openai_compat_timeout_s()
-        http_client: httpx.AsyncClient | None = None
+
+        # Always build a custom httpx client so we can control headers and
+        # pool behaviour.  The critical fix: ``Accept-Encoding: identity``
+        # prevents gateway proxies (e.g. OpenGateway) from returning broken
+        # gzip/deflate responses that httpx cannot decompress, which would
+        # surface as a connection error and trigger pointless retries.
+        client_kwargs: dict[str, Any] = {
+            "headers": {"Accept-Encoding": "identity"},
+            "timeout": timeout_s,
+        }
         if self._is_local:
             # Local model servers (Ollama, llama.cpp, vLLM) often close idle
             # HTTP connections before the client-side keepalive expires. When
@@ -378,10 +387,8 @@ class OpenAICompatProvider(LLMProvider):
             # opening a fresh connection for each request, which is cheap on a
             # LAN. Cloud providers benefit from keepalive, so we leave the
             # default pool settings for them.
-            http_client = httpx.AsyncClient(
-                limits=httpx.Limits(keepalive_expiry=0),
-                timeout=timeout_s,
-            )
+            client_kwargs["limits"] = httpx.Limits(keepalive_expiry=0)
+        http_client = httpx.AsyncClient(**client_kwargs)
         self._client = AsyncOpenAI(
             api_key=self._api_key_for_client,
             base_url=self._effective_base,

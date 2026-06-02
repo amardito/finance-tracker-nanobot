@@ -50,11 +50,13 @@ export class WhatsAppClient {
   }
 
   private normalizeJid(jid: string | undefined | null): string {
-    return (jid || '').split(':')[0];
+    // Extract leading digits: handles 6285186675994:14@s.whatsapp.net, 157080610721998:14@lid, 157080610721998@lid
+    const match = /^(\d+)/.exec(jid || '');
+    return match ? match[1] : '';
   }
 
   private wasMentioned(msg: any): boolean {
-    if (!msg?.key?.remoteJid?.endsWith('@g.us')) return false;
+    if (msg?.key?.remoteJid?.split('@')[1] !== 'g.us') return false;
 
     const candidates = [
       msg?.message?.extendedTextMessage?.contextInfo?.mentionedJid,
@@ -174,7 +176,7 @@ export class WhatsAppClient {
         const finalContent = content || (mediaPaths.length === 0 ? fallbackContent : '') || '';
         if (!finalContent && mediaPaths.length === 0) continue;
 
-        const isGroup = msg.key.remoteJid?.endsWith('@g.us') || false;
+        const isGroup = msg.key.remoteJid?.split('@')[1] === 'g.us';
         const wasMentioned = this.wasMentioned(msg);
 
         this.options.onMessage({
