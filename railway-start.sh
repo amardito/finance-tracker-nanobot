@@ -89,7 +89,7 @@ config = {
             "bridgeUrl": f"ws://127.0.0.1:{os.environ.get('BRIDGE_PORT', '3001')}",
             "bridgeToken": os.environ["NANOBOT_BRIDGE_TOKEN"],
             "allowFrom": allow,
-            "groupPolicy": "open",
+            "groupPolicy": "mention",
         }
     },
     "tools": {
