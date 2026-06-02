@@ -1,7 +1,7 @@
 #!/bin/sh
 set -eu
 
-DATA_DIR="${NANOBOT_DATA_DIR:-/data/.nanobot}"
+DATA_DIR="${NANOBOT_DATA_DIR:-$HOME/.nanobot}"
 WORKSPACE_DIR="${NANOBOT_WORKSPACE_DIR:-/tmp/nanobot/workspace}"
 CONFIG_PATH="${NANOBOT_CONFIG_PATH:-/tmp/nanobot-config.json}"
 BRIDGE_HOST="${BRIDGE_HOST:-127.0.0.1}"
