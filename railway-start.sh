@@ -52,6 +52,10 @@ import sys
 def compact_secret(name: str) -> str:
     return "".join(os.environ[name].split())
 
+def mcp_url() -> str:
+    url = os.environ["FINTRACK_MCP_URL"].strip().rstrip("/")
+    return url if url.endswith("/mcp") else f"{url}/mcp"
+
 allow = [
     item.strip()
     for item in os.environ.get("NANOBOT_WHATSAPP_ALLOW_FROM", "").split(",")
@@ -85,14 +89,14 @@ config = {
             "bridgeUrl": f"ws://127.0.0.1:{os.environ.get('BRIDGE_PORT', '3001')}",
             "bridgeToken": os.environ["NANOBOT_BRIDGE_TOKEN"],
             "allowFrom": allow,
-            "groupPolicy": "ignore",
+            "groupPolicy": "open",
         }
     },
     "tools": {
         "mcpServers": {
             "fintrack": {
                 "type": "streamableHttp",
-                "url": os.environ["FINTRACK_MCP_URL"],
+                "url": mcp_url(),
                 "headers": {
                     "Authorization": "Bearer " + compact_secret("FINTRACK_MCP_SERVICE_TOKEN"),
                 },
