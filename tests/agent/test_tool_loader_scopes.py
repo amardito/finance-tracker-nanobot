@@ -75,3 +75,32 @@ async def test_loader_filters_by_scope():
     assert registry.has("core_only")
     assert not registry.has("sub_only")
     assert registry.has("universal")
+
+
+@pytest.mark.asyncio
+async def test_loader_filters_by_enabled_tools():
+    from nanobot.agent.tools.registry import ToolRegistry
+
+    loader = ToolLoader(test_classes=[_CoreOnlyTool, _UniversalTool])
+    registry = ToolRegistry()
+    ctx = ToolContext(config={"enabled_tools": ["universal"]}, workspace="/tmp")
+
+    registered = loader.load(ctx, registry, scope="core")
+
+    assert registered == ["universal"]
+    assert not registry.has("core_only")
+    assert registry.has("universal")
+
+
+@pytest.mark.asyncio
+async def test_loader_allows_no_builtin_tools():
+    from nanobot.agent.tools.registry import ToolRegistry
+
+    loader = ToolLoader(test_classes=[_CoreOnlyTool, _UniversalTool])
+    registry = ToolRegistry()
+    ctx = ToolContext(config={"enabled_tools": []}, workspace="/tmp")
+
+    registered = loader.load(ctx, registry, scope="core")
+
+    assert registered == []
+    assert registry.tool_names == []

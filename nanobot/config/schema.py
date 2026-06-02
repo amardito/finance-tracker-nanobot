@@ -297,6 +297,7 @@ class ToolsConfig(Base):
     image_generation: ImageGenerationToolConfig = Field(
         default_factory=lambda: _lazy_default("nanobot.agent.tools.image_generation", "ImageGenerationToolConfig"),
     )
+    enabled_tools: list[str] = Field(default_factory=lambda: ["*"])  # Built-in/plugin tool allowlist. ["*"] = all; [] = none.
     restrict_to_workspace: bool = False  # policy intent: keep tool access inside workspace when possible
     webui_allow_local_service_access: bool = Field(
         default=True,

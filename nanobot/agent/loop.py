@@ -488,7 +488,8 @@ class AgentLoop:
         registered = loader.load(ctx, self.tools)
 
         # MyTool needs runtime state reference — manual registration
-        if self.tools_config.my.enable:
+        enabled_tools = set(getattr(self.tools_config, "enabled_tools", ["*"]))
+        if self.tools_config.my.enable and ("*" in enabled_tools or "my" in enabled_tools):
             self.tools.register(
                 MyTool(runtime_state=self, modify_allowed=self.tools_config.my.allow_set)
             )

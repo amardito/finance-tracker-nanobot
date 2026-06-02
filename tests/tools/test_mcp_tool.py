@@ -368,6 +368,40 @@ def _make_fake_session(tool_names: list[str]) -> SimpleNamespace:
     return SimpleNamespace(initialize=initialize, list_tools=list_tools)
 
 
+def _make_fake_session_with_capabilities(
+    tool_names: list[str],
+    *,
+    resource_names: list[str] | None = None,
+    prompt_names: list[str] | None = None,
+) -> SimpleNamespace:
+    async def initialize() -> None:
+        return None
+
+    async def list_tools() -> SimpleNamespace:
+        return SimpleNamespace(tools=[_make_tool_def(name) for name in tool_names])
+
+    async def list_resources() -> SimpleNamespace:
+        resources = [
+            SimpleNamespace(name=name, description=name, uri=f"fintrack://{name}")
+            for name in resource_names or []
+        ]
+        return SimpleNamespace(resources=resources)
+
+    async def list_prompts() -> SimpleNamespace:
+        prompts = [
+            SimpleNamespace(name=name, description=name, arguments=[])
+            for name in prompt_names or []
+        ]
+        return SimpleNamespace(prompts=prompts)
+
+    return SimpleNamespace(
+        initialize=initialize,
+        list_tools=list_tools,
+        list_resources=list_resources,
+        list_prompts=list_prompts,
+    )
+
+
 @pytest.mark.asyncio
 async def test_connect_mcp_servers_enabled_tools_supports_raw_names(
     fake_mcp_runtime: dict[str, object | None],
@@ -430,6 +464,26 @@ async def test_connect_mcp_servers_enabled_tools_empty_list_registers_none(
         await stack.aclose()
 
     assert registry.tool_names == []
+
+
+@pytest.mark.asyncio
+async def test_connect_mcp_servers_strict_enabled_tools_disable_resources_and_prompts(
+    fake_mcp_runtime: dict[str, object | None],
+) -> None:
+    fake_mcp_runtime["session"] = _make_fake_session_with_capabilities(
+        ["demo", "other"],
+        resource_names=["account"],
+        prompt_names=["setup"],
+    )
+    registry = ToolRegistry()
+    stacks = await connect_mcp_servers(
+        {"test": MCPServerConfig(command="fake", enabled_tools=["demo"])},
+        registry,
+    )
+    for stack in stacks.values():
+        await stack.aclose()
+
+    assert registry.tool_names == ["mcp_test_demo"]
 
 
 @pytest.mark.asyncio

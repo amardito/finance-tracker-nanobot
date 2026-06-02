@@ -17,6 +17,14 @@ _SKIP_MODULES = frozenset({
 })
 
 
+def _configured_enabled_tools(config: Any) -> list[str]:
+    if isinstance(config, dict):
+        raw = config.get("enabled_tools", config.get("enabledTools", ["*"]))
+    else:
+        raw = getattr(config, "enabled_tools", ["*"])
+    return raw if isinstance(raw, list) else ["*"]
+
+
 class ToolLoader:
     def __init__(self, package: Any = None, *, test_classes: list[type[Tool]] | None = None):
         if package is None:
@@ -86,6 +94,8 @@ class ToolLoader:
     def load(self, ctx: Any, registry: ToolRegistry, *, scope: str = "core") -> list[str]:
         registered: list[str] = []
         builtin_names: set[str] = set()
+        enabled_tools = set(_configured_enabled_tools(ctx.config))
+        allow_all_tools = "*" in enabled_tools
         sources = [(self.discover(), False), (self._discover_plugins().values(), True)]
         for source, is_plugin_source in sources:
             for tool_cls in source:
@@ -96,6 +106,9 @@ class ToolLoader:
                     if not tool_cls.enabled(ctx):
                         continue
                     tool = tool_cls.create(ctx)
+                    if not allow_all_tools and tool.name not in enabled_tools:
+                        logger.debug("Tool '{}' skipped: not in tools.enabledTools", tool.name)
+                        continue
                     if registry.has(tool.name):
                         if is_plugin_source and tool.name in builtin_names:
                             logger.warning(
