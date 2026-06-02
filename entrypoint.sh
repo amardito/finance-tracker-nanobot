@@ -12,4 +12,13 @@ Fix (pick one):
 EOF
     exit 1
 fi
+
+if [ "$#" -gt 0 ]; then
+    case "$1" in
+        sh|bash|railway-start|/*|./*)
+            exec "$@"
+            ;;
+    esac
+fi
+
 exec nanobot "$@"
