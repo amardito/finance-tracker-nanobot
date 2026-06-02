@@ -49,6 +49,9 @@ import json
 import os
 import sys
 
+def compact_secret(name: str) -> str:
+    return "".join(os.environ[name].split())
+
 allow = [
     item.strip()
     for item in os.environ.get("NANOBOT_WHATSAPP_ALLOW_FROM", "").split(",")
@@ -70,7 +73,7 @@ config = {
     },
     "providers": {
         "openai": {
-            "apiKey": os.environ["OPENAI_COMPAT_API_KEY"],
+            "apiKey": compact_secret("OPENAI_COMPAT_API_KEY"),
             "apiBase": os.environ["OPENAI_COMPAT_BASE_URL"],
             "apiType": "chat_completions",
             "extraHeaders": {"Accept-Encoding": "identity"},
@@ -91,7 +94,7 @@ config = {
                 "type": "streamableHttp",
                 "url": os.environ["FINTRACK_MCP_URL"],
                 "headers": {
-                    "Authorization": "Bearer " + os.environ["FINTRACK_MCP_SERVICE_TOKEN"],
+                    "Authorization": "Bearer " + compact_secret("FINTRACK_MCP_SERVICE_TOKEN"),
                 },
                 "toolTimeout": 60,
                 "enabledTools": [
