@@ -15,6 +15,7 @@ import makeWASocket, {
 
 import { Boom } from '@hapi/boom';
 import qrcode from 'qrcode-terminal';
+import QRCode from 'qrcode';
 import pino from 'pino';
 import { readFile, writeFile, mkdir } from 'fs/promises';
 import { join, basename, resolve, sep } from 'path';
@@ -112,6 +113,7 @@ export class WhatsAppClient {
         // Display QR code in terminal
         console.log('\n📱 Scan this QR code with WhatsApp (Linked Devices):\n');
         qrcode.generate(qr, { small: true });
+        await this.writePairingQR(qr);
         this.options.onQR(qr);
       }
 
@@ -191,6 +193,47 @@ export class WhatsAppClient {
         });
       }
     });
+  }
+
+  private async writePairingQR(qr: string): Promise<void> {
+    try {
+      const pairingDir = join(this.options.authDir, '..', 'pairing');
+      await mkdir(pairingDir, { recursive: true });
+
+      const svg = await QRCode.toString(qr, {
+        type: 'svg',
+        errorCorrectionLevel: 'M',
+        margin: 4,
+        width: 512,
+      });
+
+      await writeFile(join(pairingDir, 'whatsapp-qr.txt'), qr, 'utf8');
+      await writeFile(join(pairingDir, 'whatsapp-qr.svg'), svg, 'utf8');
+      await writeFile(
+        join(pairingDir, 'whatsapp-qr.html'),
+        `<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>NanoBot WhatsApp QR</title>
+  <style>
+    body { font-family: sans-serif; margin: 24px; background: #fff; color: #111; }
+    .qr { width: min(90vw, 520px); }
+  </style>
+</head>
+<body>
+  <h1>Scan with WhatsApp Linked Devices</h1>
+  <div class="qr">${svg}</div>
+</body>
+</html>
+`,
+        'utf8',
+      );
+
+      console.log(`Wrote WhatsApp pairing QR files to ${pairingDir}`);
+    } catch (err) {
+      console.error('Failed to write pairing QR files:', err);
+    }
   }
 
   private async downloadMedia(msg: any, mimetype?: string, fileName?: string): Promise<string | null> {
