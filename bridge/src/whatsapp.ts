@@ -143,14 +143,26 @@ export class WhatsAppClient {
 
     // Handle incoming messages
     this.sock.ev.on('messages.upsert', async ({ messages, type }: { messages: any[]; type: string }) => {
+      console.log(`WhatsApp upsert type=${type} messages=${messages.length}`);
       if (type !== 'notify') return;
 
       for (const msg of messages) {
-        if (msg.key.fromMe) continue;
-        if (msg.key.remoteJid === 'status@broadcast') continue;
+        const remoteJid = msg.key.remoteJid || '';
+        const messageId = msg.key.id || '';
+        if (msg.key.fromMe) {
+          console.log(`WhatsApp message skipped fromMe id=${messageId} remote=${remoteJid}`);
+          continue;
+        }
+        if (remoteJid === 'status@broadcast') {
+          console.log(`WhatsApp message skipped status broadcast id=${messageId}`);
+          continue;
+        }
 
         const unwrapped = baileysExtractMessageContent(msg.message);
-        if (!unwrapped) continue;
+        if (!unwrapped) {
+          console.log(`WhatsApp message skipped empty content id=${messageId} remote=${remoteJid}`);
+          continue;
+        }
 
         const content = this.getTextContent(unwrapped);
         let fallbackContent: string | null = null;
@@ -176,14 +188,21 @@ export class WhatsAppClient {
         }
 
         const finalContent = content || (mediaPaths.length === 0 ? fallbackContent : '') || '';
-        if (!finalContent && mediaPaths.length === 0) continue;
+        if (!finalContent && mediaPaths.length === 0) {
+          console.log(`WhatsApp message skipped unsupported content id=${messageId} remote=${remoteJid}`);
+          continue;
+        }
 
-        const isGroup = msg.key.remoteJid?.split('@')[1] === 'g.us';
+        const isGroup = remoteJid.split('@')[1] === 'g.us';
         const wasMentioned = this.wasMentioned(msg);
+        console.log(
+          `WhatsApp inbound id=${messageId} remote=${remoteJid} alt=${msg.key.remoteJidAlt || ''} ` +
+          `group=${isGroup} mentioned=${wasMentioned} media=${mediaPaths.length} text=${finalContent.slice(0, 80)}`,
+        );
 
         this.options.onMessage({
-          id: msg.key.id || '',
-          sender: msg.key.remoteJid || '',
+          id: messageId,
+          sender: remoteJid,
           pn: msg.key.remoteJidAlt || '',
           content: finalContent,
           timestamp: msg.messageTimestamp as number,

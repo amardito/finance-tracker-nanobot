@@ -60,7 +60,10 @@ export class BridgeServer {
     // Initialize WhatsApp client
     this.wa = new WhatsAppClient({
       authDir: this.authDir,
-      onMessage: (msg) => this.broadcast({ type: 'message', ...msg }),
+      onMessage: (msg) => {
+        console.log(`Broadcasting WhatsApp message id=${msg.id} sender=${msg.sender} clients=${this.clients.size}`);
+        this.broadcast({ type: 'message', ...msg });
+      },
       onQR: (qr) => this.broadcast({ type: 'qr', qr }),
       onStatus: (status) => this.broadcast({ type: 'status', status }),
     });
@@ -126,6 +129,9 @@ export class BridgeServer {
 
   private broadcast(msg: BridgeMessage): void {
     const data = JSON.stringify(msg);
+    if (msg.type === 'message' && this.clients.size === 0) {
+      console.warn('Dropping WhatsApp message because no Python clients are connected');
+    }
     for (const client of this.clients) {
       if (client.readyState === WebSocket.OPEN) {
         client.send(data);

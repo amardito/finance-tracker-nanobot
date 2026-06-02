@@ -217,9 +217,22 @@ class WhatsAppChannel(BaseChannel):
             # Extract just the phone number or lid as chat_id
             is_group = data.get("isGroup", False)
             was_mentioned = data.get("wasMentioned", False)
+            self.logger.info(
+                "Inbound WhatsApp bridge message id={} sender={} pn={} group={} mentioned={} content={}",
+                message_id or "(empty)",
+                sender or "(empty)",
+                pn or "(empty)",
+                is_group,
+                was_mentioned,
+                content[:80],
+            )
 
             if is_group and getattr(self.config, "group_policy", "open") == "mention":
                 if not was_mentioned:
+                    self.logger.info(
+                        "Dropping WhatsApp group message id={} because bot was not mentioned",
+                        message_id or "(empty)",
+                    )
                     return
 
             # Classify by JID suffix: @s.whatsapp.net = phone, @lid.whatsapp.net = LID
@@ -241,6 +254,11 @@ class WhatsAppChannel(BaseChannel):
 
             sender_id = phone_id or self._lid_to_phone.get(lid_id, "") or lid_id or id_a or id_b
             if not self.is_allowed(sender_id):
+                self.logger.info(
+                    "Dropping WhatsApp message id={} from sender_id={} because sender is not allowed",
+                    message_id or "(empty)",
+                    sender_id or "(empty)",
+                )
                 return
 
             if message_id:
