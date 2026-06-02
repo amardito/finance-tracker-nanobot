@@ -1,4 +1,11 @@
 #!/bin/sh
+if [ "$(id -u)" = "0" ]; then
+    data_dir="${NANOBOT_DATA_DIR:-$HOME/.nanobot}"
+    mkdir -p "$HOME/.nanobot" "$data_dir"
+    chown -R nanobot:nanobot "$HOME" "$data_dir"
+    exec gosu nanobot /usr/local/bin/entrypoint.sh "$@"
+fi
+
 dir="$HOME/.nanobot"
 if [ -d "$dir" ] && [ ! -w "$dir" ]; then
     owner_uid=$(stat -c %u "$dir" 2>/dev/null || stat -f %u "$dir" 2>/dev/null)
